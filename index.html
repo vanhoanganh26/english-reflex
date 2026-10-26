@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex">
+    <title>English Reflex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #F2F5F3;
+    --surface: #FFFFFF;
+    --ink: #18211F;
+    --muted: #5B6966;
+    --line: #D9E1DE;
+    --accent: #2457D6;
+    --accent-ink: #FFFFFF;
+    --pass: #12805C;
+    --fail: #C23B3B;
+    --run: #B7791F;
+    --info: #5B6966;
+    --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #0F1513;
+      --surface: #18201E;
+      --ink: #E7EFEC;
+      --muted: #9AABA6;
+      --line: #2A3532;
+      --accent: #7FA2FF;
+      --accent-ink: #0F1513;
+      --pass: #3CC48F;
+      --fail: #F07474;
+      --run: #E0A84A;
+      --info: #9AABA6;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 18px 48px; }
+
+  .top { margin-bottom: 20px; }
+  .brand { margin: 0; font-weight: 600; color: var(--accent); }
+  h1 { margin: 4px 0 8px; font-size: 2rem; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; }
+  .lead { margin: 0; color: var(--muted); max-width: 60ch; }
+
+  .env { display: grid; gap: 8px; margin-bottom: 24px; }
+  .env-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 0.8125rem; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  }
+  .chip.good { color: var(--pass); border-color: currentColor; }
+  .chip.bad { color: var(--fail); border-color: currentColor; }
+
+  .tests { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .test {
+    display: grid; grid-template-columns: 44px 1fr; gap: 14px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+  }
+  .num {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center; font-weight: 700; font-size: 1.125rem;
+    border: 2px solid var(--line); color: var(--muted);
+  }
+  .test[data-status="run"] .num { border-color: var(--run); color: var(--run); }
+  .test[data-status="pass"] .num { background: var(--pass); border-color: var(--pass); color: var(--surface); }
+  .test[data-status="fail"] .num { background: var(--fail); border-color: var(--fail); color: var(--surface); }
+  .test[data-status="info"] .num { border-color: var(--info); color: var(--info); border-style: dashed; }
+
+  .test h2 { margin: 0; font-size: 1.0625rem; font-weight: 600; }
+  .state { font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
+  .test[data-status="pass"] .state { color: var(--pass); }
+  .test[data-status="fail"] .state { color: var(--fail); }
+  .test[data-status="run"] .state { color: var(--run); }
+  .hint { margin: 4px 0 12px; color: var(--muted); font-size: 0.9375rem; }
+  .detail { margin: 10px 0 0; white-space: pre-wrap; font-size: 0.9375rem; overflow-wrap: anywhere; }
+  .detail:empty { display: none; }
+
+  .btn {
+    min-height: 48px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+  .confirm[hidden] { display: none; }
+  .confirm span { width: 100%; font-weight: 600; }
+
+  /* Thanh mức âm khi ghi */
+  .meter { display: flex; align-items: center; gap: 3px; height: 48px; margin-top: 12px; }
+  .meter[hidden] { display: none; }
+  .meter i { flex: 1; min-height: 4px; height: 4px; border-radius: 3px; background: var(--accent); transition: height 60ms linear; }
+
+  audio { width: 100%; margin-top: 12px; }
+  audio[hidden] { display: none; }
+
+  .report { margin-top: 24px; display: grid; gap: 10px; }
+  .toast { margin: 0; min-height: 1.5em; color: var(--pass); font-weight: 600; }
+  textarea {
+    width: 100%; font: 0.875rem/1.5 var(--font); padding: 12px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+
+  .auth { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 24px; }
+  .auth[hidden] { display: none; }
+  .auth h2 { margin: 0 0 4px; font-size: 1.0625rem; }
+  .auth p { margin: 0 0 12px; color: var(--muted); font-size: 0.9375rem; }
+  .auth .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .auth input {
+    flex: 1 1 220px; min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font: 1rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .auth .err { color: var(--fail); font-weight: 600; margin: 10px 0 0; }
+  .auth .err:empty { display: none; }
+  .linkbtn { background: none; border: 0; padding: 4px 0; color: var(--accent); font: inherit; font-size: 0.8125rem; cursor: pointer; text-decoration: underline; }
+</style>
+
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="top">
+        <p class="brand">English Reflex</p>
+        <h1>Kiểm tra thiết bị</h1>
+        <p class="lead">Chạy lần lượt 5 bước trên máy này. Xong, bấm “Sao chép kết quả” và gửi lại để chốt cách làm app.</p>
+      </header>
+
+      <section class="auth" id="auth" hidden aria-label="Mã truy cập">
+        <h2>Nhập mã truy cập</h2>
+        <p>Dán mã 24 ký tự lấy từ hàm createApiToken. Máy này sẽ nhớ mã, lần sau không cần nhập lại.</p>
+        <div class="row">
+          <input id="tokenInput" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Dán mã vào đây">
+          <button class="btn primary" id="saveToken">Lưu mã</button>
+        </div>
+        <p class="err" id="authErr" role="alert"></p>
+      </section>
+
+      <section class="env" aria-label="Tình trạng">
+        <div class="env-row" id="server"><span class="chip">Đang kiểm tra máy chủ…</span></div>
+        <div class="env-row" id="browser"></div>
+      </section>
+
+      <ol class="tests" id="tests"></ol>
+
+      <section class="report">
+        <button class="btn primary" id="copy">Sao chép kết quả</button>
+        <p class="toast" id="toast" role="status" aria-live="polite"></p>
+        <textarea id="report" rows="9" hidden readonly></textarea>
+      </section>
+    </main>
+    <script>
+  // ======= CẤU HÌNH: dán URL bản triển khai Apps Script (kết thúc bằng /exec) =======
+  const CONFIG = {
+    API_URL: 'https://script.google.com/macros/s/AKfycbxRJwQThiWUM1D6wi8e9DSKkZrqzebPB4M8dGlTuU4CmcwZrMvKtk7HTwjbqoGpOKi48w/exec'
+  };
+  const TOKEN_KEY = 'englishReflex.token';
+
+  // Câu mẫu dùng cho mọi phép thử.
+  const SAMPLE = "I'm in charge of the northern region.";
+  const LABEL = { idle: 'Chưa chạy', run: 'Đang chạy…', pass: 'Đạt', fail: 'Không đạt', info: 'Tham khảo' };
+  const results = {};
+  let wavBlob = null;
+  let uploadedId = null;
+  let serverInfo = null;
+
+  const TESTS = [
+    { key: 'tts', title: 'Phát giọng đọc', action: 'Phát câu mẫu', fn: testTts,
+      hint: 'Máy đọc một câu tiếng Anh. Trên iPhone, tắt nút gạt im lặng và mở âm lượng trước.' },
+    { key: 'mic', title: 'Ghi âm 5 giây', action: 'Bắt đầu ghi', fn: testMic,
+      hint: 'Bấm ghi rồi đọc to: “' + SAMPLE + '”. Xong máy sẽ phát lại cho anh nghe.' },
+    { key: 'upload', title: 'Gửi bản ghi lên Drive', action: 'Gửi bản ghi', fn: testUpload,
+      hint: 'Bản ghi ở bước 2 được gửi lên máy chủ và lưu vào thư mục recordings trên Drive.' },
+    { key: 'gemini', title: 'Gemini nghe và chép lời', action: 'Gửi cho Gemini', fn: testGemini,
+      hint: 'Gemini nghe bản ghi vừa gửi và chép lại lời anh nói.' },
+    { key: 'sr', title: 'Nhận dạng giọng nói của trình duyệt', action: 'Thử nhận dạng', fn: testSr,
+      hint: 'Chỉ để tham khảo. Không có thì app vẫn chấm bằng Gemini.' }
+  ];
+
+  // ---------- Khởi tạo giao diện ----------
+  function render() {
+    const list = document.getElementById('tests');
+    TESTS.forEach((t, i) => {
+      const li = document.createElement('li');
+      li.className = 'test';
+      li.dataset.test = t.key;
+      li.dataset.status = 'idle';
+      li.innerHTML =
+        '<div class="num" aria-hidden="true">' + (i + 1) + '</div>' +
+        '<div class="body">' +
+          '<h2>' + t.title + '</h2>' +
+          '<div class="state">' + LABEL.idle + '</div>' +
+          '<p class="hint">' + t.hint + '</p>' +
+          '<button class="btn primary run">' + t.action + '</button>' +
+          (t.key === 'mic' ? '<div class="meter" hidden>' + '<i></i>'.repeat(28) + '</div><audio id="playback" controls hidden></audio>' : '') +
+          '<div class="confirm" hidden><span>Anh có nghe rõ không?</span>' +
+            '<button class="btn" data-v="1">Nghe rõ</button><button class="btn" data-v="0">Không nghe thấy</button></div>' +
+          '<p class="detail"></p>' +
+        '</div>';
+      const btn = li.querySelector('.run');
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try { await t.fn(); }
+        catch (e) { setStatus(t.key, 'fail', (e && e.name ? e.name + ': ' : '') + (e && e.message ? e.message : e)); }
+        finally { btn.disabled = false; }
+      });
+      list.appendChild(li);
+    });
+    document.getElementById('copy').addEventListener('click', copyReport);
+    document.getElementById('saveToken').addEventListener('click', saveToken);
+    document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveToken(); });
+    renderBrowserChips();
+    loadServer();
+  }
+
+  function setStatus(key, status, detail) {
+    const li = document.querySelector('[data-test="' + key + '"]');
+    li.dataset.status = status;
+    li.querySelector('.state').textContent = LABEL[status];
+    if (detail !== undefined) li.querySelector('.detail').textContent = detail;
+    results[key] = { status: status, detail: detail || '' };
+  }
+
+  // Hỏi anh có nghe thấy không; trả về true/false.
+  function confirmHeard(key) {
+    const box = document.querySelector('[data-test="' + key + '"] .confirm');
+    box.hidden = false;
+    return new Promise(resolve => {
+      box.querySelectorAll('button').forEach(b => {
+        b.onclick = () => { box.hidden = true; resolve(b.dataset.v === '1'); };
+      });
+    });
+  }
+
+  // ---------- Gọi máy chủ (Apps Script API) ----------
+  async function call(action, payload) {
+    if (!CONFIG.API_URL || CONFIG.API_URL.indexOf('PASTE_') === 0) throw new Error('Chưa điền API_URL trong index.html.');
+    const token = getToken();
+    if (!token) { showAuth(''); throw new Error('Chưa nhập mã truy cập.'); }
+    let res;
+    try {
+      res = await fetch(CONFIG.API_URL, {
+        method: 'POST',
+        // text/plain để trình duyệt không gửi yêu cầu kiểm tra CORS trước (Apps Script không xử lý được)
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ token: token, action: action, payload: payload || {} })
+      });
+    } catch (e) {
+      throw new Error('Không kết nối được máy chủ (' + e.message + '). Kiểm tra mạng và quyền truy cập "Bất kỳ ai" của bản triển khai.');
+    }
+    if (!res.ok) throw new Error('Máy chủ lỗi HTTP ' + res.status + '.');
+    let r;
+    try { r = await res.json(); } catch (e) { throw new Error('Máy chủ trả về dữ liệu không đọc được. Kiểm tra API_URL và quyền truy cập của bản triển khai.'); }
+    if (!r.ok) {
+      if (r.code === 'AUTH') showAuth(r.error);
+      throw new Error(r.error || 'Máy chủ báo lỗi không rõ.');
+    }
+    return r.data;
+  }
+
+  // ---------- Mã truy cập (lưu trên máy này) ----------
+  function getToken() {
+    try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
+  }
+  function setToken(t) {
+    try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+  }
+  function showAuth(message) {
+    document.getElementById('auth').hidden = false;
+    document.getElementById('authErr').textContent = message || '';
+    document.getElementById('tokenInput').focus();
+  }
+  async function saveToken() {
+    const input = document.getElementById('tokenInput');
+    const t = input.value.replace(/\s+/g, '');
+    if (!t) { showAuth('Anh dán mã truy cập vào ô trên.'); return; }
+    setToken(t);
+    document.getElementById('authErr').textContent = '';
+    const ok = await loadServer();
+    if (ok) { document.getElementById('auth').hidden = true; input.value = ''; }
+  }
+
+  async function loadServer() {
+    const row = document.getElementById('server');
+    if (!getToken()) {
+      row.innerHTML = '<span class="chip bad">Chưa nhập mã truy cập</span>';
+      showAuth('');
+      return false;
+    }
+    row.innerHTML = '<span class="chip">Đang kết nối máy chủ…</span>';
+    try {
+      serverInfo = await call('ping');
+      row.innerHTML = [
+        chip('Máy chủ', true),
+        chip('Gemini API key', serverInfo.hasKey),
+        chip('Sheet', serverInfo.sheetReady),
+        chip('Thư mục media', serverInfo.mediaReady),
+        '<span class="chip">Model: ' + escapeHtml(serverInfo.textModel) + '</span>',
+        '<button class="linkbtn" id="changeToken">Đổi mã truy cập</button>'
+      ].join('');
+      document.getElementById('changeToken').onclick = () => { setToken(''); serverInfo = null; loadServer(); };
+      return true;
+    } catch (e) {
+      row.innerHTML = '<span class="chip bad">Không kết nối được máy chủ: ' + escapeHtml(e.message) + '</span>';
+      return false;
+    }
+  }
+
+  // ---------- Thông tin trình duyệt ----------
+  function envInfo() {
+    let inFrame = true;
+    try { inFrame = window.self !== window.top; } catch (e) {}
+    const policy = document.permissionsPolicy || document.featurePolicy;
+    let micPolicy = 'không rõ';
+    if (policy && policy.allowsFeature) micPolicy = policy.allowsFeature('microphone') ? 'cho phép' : 'bị chặn';
+    return {
+      ua: navigator.userAgent,
+      secure: window.isSecureContext,
+      inFrame: inFrame,
+      micPolicy: micPolicy,
+      getUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+      speechSynthesis: 'speechSynthesis' in window,
+      speechRecognition: !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+    };
+  }
+
+  function renderBrowserChips() {
+    const env = envInfo();
+    document.getElementById('browser').innerHTML = [
+      chip('Kết nối bảo mật', env.secure),
+      chip('Có micro API', env.getUserMedia),
+      '<span class="chip' + (env.micPolicy === 'bị chặn' ? ' bad' : '') + '">Quyền micro của trang: ' + env.micPolicy + '</span>',
+      chip('Giọng đọc trình duyệt', env.speechSynthesis)
+    ].join('');
+  }
+
+  function chip(label, ok) {
+    return '<span class="chip ' + (ok ? 'good' : 'bad') + '">' + label + ': ' + (ok ? 'có' : 'chưa') + '</span>';
+  }
+
+  // ---------- 1. Giọng đọc ----------
+  async function testTts() {
+    if (!('speechSynthesis' in window)) { setStatus('tts', 'fail', 'Trình duyệt không có speechSynthesis.'); return; }
+    setStatus('tts', 'run', 'Đang phát…');
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(SAMPLE);
+    u.lang = 'en-US';
+    u.rate = 0.9;
+    const voice = speechSynthesis.getVoices().find(v => /^en[-_]US/i.test(v.lang));
+    if (voice) u.voice = voice;
+    let started = false;
+    const outcome = await new Promise(resolve => {
+      u.onstart = () => { started = true; };
+      u.onend = () => resolve('end');
+      u.onerror = e => resolve('error: ' + (e.error || 'không rõ'));
+      setTimeout(() => resolve(started ? 'end' : 'timeout'), 10000);
+      speechSynthesis.speak(u);
+    });
+    if (outcome !== 'end') {
+      setStatus('tts', 'fail', outcome === 'timeout' ? 'Không phát được sau 10 giây.' : 'Lỗi ' + outcome);
+      return;
+    }
+    const heard = await confirmHeard('tts');
+    setStatus('tts', heard ? 'pass' : 'fail', heard
+      ? 'Giọng: ' + (voice ? voice.name : 'mặc định của máy')
+      : 'Máy báo đã phát xong nhưng anh không nghe thấy. Trên iPhone, kiểm tra nút gạt im lặng và âm lượng.');
+  }
+
+  // ---------- 2. Ghi âm ----------
+  async function testMic() {
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+      setStatus('mic', 'fail', 'Trình duyệt không có getUserMedia.');
+      return;
+    }
+    setStatus('mic', 'run', 'Đang xin quyền micro…');
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+    } catch (e) {
+      const frameNote = e.name === 'NotAllowedError'
+        ? '\nTrình duyệt đang chặn micro. Trên iPhone: Cài đặt > Safari > Micrô, chọn Hỏi hoặc Cho phép. Trên Chrome: bấm biểu tượng ổ khóa cạnh địa chỉ, bật Micro.'
+        : '';
+      setStatus('mic', 'fail', e.name + ': ' + e.message + frameNote);
+      return;
+    }
+
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    await ctx.resume();
+    const source = ctx.createMediaStreamSource(stream);
+    const processor = ctx.createScriptProcessor(4096, 1, 1);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    const silent = ctx.createGain();
+    silent.gain.value = 0;
+    const chunks = [];
+    processor.onaudioprocess = e => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    source.connect(analyser);
+    source.connect(processor);
+    processor.connect(silent);
+    silent.connect(ctx.destination);
+
+    const stopMeter = runMeter(analyser);
+    for (let s = 5; s > 0; s--) {
+      setStatus('mic', 'run', 'Đang ghi… còn ' + s + ' giây. Đọc to: “' + SAMPLE + '”');
+      await sleep(1000);
+    }
+    stopMeter();
+    processor.disconnect();
+    source.disconnect();
+    stream.getTracks().forEach(t => t.stop());
+    const inputRate = ctx.sampleRate;
+    await ctx.close();
+
+    const pcm = mergeChunks(chunks);
+    if (!pcm.length) { setStatus('mic', 'fail', 'Không thu được âm thanh nào.'); return; }
+    let peak = 0;
+    for (let i = 0; i < pcm.length; i++) { const a = Math.abs(pcm[i]); if (a > peak) peak = a; }
+
+    wavBlob = encodeWav(downsample(pcm, inputRate, 16000), 16000);
+    uploadedId = null;
+    const audio = document.getElementById('playback');
+    audio.src = URL.createObjectURL(wavBlob);
+    audio.hidden = false;
+    setStatus('mic', 'run', 'Đang phát lại. Nếu không tự phát, bấm nút phát trên thanh âm thanh.');
+    try { await audio.play(); } catch (e) { /* iOS có thể chặn tự phát; anh bấm nút phát */ }
+
+    const heard = await confirmHeard('mic');
+    const info = 'Tần số gốc ' + inputRate + ' Hz, đã chuyển sang WAV 16 kHz, ' + kb(wavBlob.size) + ', mức to nhất ' + Math.round(peak * 100) + '%.';
+    const quiet = peak < 0.02 ? '\nÂm lượng rất nhỏ: có thể micro chưa thu được giọng.' : '';
+    setStatus('mic', heard ? 'pass' : 'fail', info + quiet + (heard ? '' : '\nAnh không nghe được bản ghi.'));
+  }
+
+  // Vẽ thanh mức âm khi đang ghi.
+  function runMeter(analyser) {
+    const meter = document.querySelector('[data-test="mic"] .meter');
+    const bars = meter.querySelectorAll('i');
+    const data = new Uint8Array(analyser.fftSize);
+    const levels = new Array(bars.length).fill(0);
+    meter.hidden = false;
+    let raf = 0;
+    const tick = () => {
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) { const v = (data[i] - 128) / 128; sum += v * v; }
+      levels.shift();
+      levels.push(Math.min(1, Math.sqrt(sum / data.length) * 4));
+      bars.forEach((b, i) => { b.style.height = Math.max(4, levels[i] * 48) + 'px'; });
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }
+
+  // ---------- 3. Gửi lên Drive ----------
+  async function testUpload() {
+    if (!wavBlob) { setStatus('upload', 'fail', 'Chạy bước 2 trước để có bản ghi.'); return; }
+    setStatus('upload', 'run', 'Đang gửi lên Drive…');
+    const t0 = performance.now();
+    const b64 = await blobToBase64(wavBlob);
+    const d = await call('saveRecording', { b64: b64 });
+    uploadedId = d.fileId;
+    const same = d.bytes === wavBlob.size;
+    setStatus('upload', same ? 'pass' : 'fail',
+      d.name + ': ' + kb(d.bytes) + ' trên Drive, ' + kb(wavBlob.size) + ' trên máy, mất ' + Math.round(performance.now() - t0) + ' ms.' +
+      (same ? '' : '\nDung lượng không khớp: dữ liệu bị lỗi khi gửi.'));
+  }
+
+  // ---------- 4. Gemini chép lời ----------
+  async function testGemini() {
+    if (!uploadedId) { setStatus('gemini', 'fail', 'Chạy bước 3 trước để có bản ghi trên Drive.'); return; }
+    if (serverInfo && !serverInfo.hasKey) { setStatus('gemini', 'fail', 'Chưa đặt GEMINI_API_KEY trong Script Properties.'); return; }
+    setStatus('gemini', 'run', 'Gemini đang nghe bản ghi…');
+    const d = await call('transcribe', { fileId: uploadedId });
+    const heard = d.transcript && !/no speech/i.test(d.transcript);
+    setStatus('gemini', heard ? 'pass' : 'fail',
+      'Gemini nghe được: “' + d.transcript + '”\nKhớp câu mẫu ' + overlap(d.transcript, SAMPLE) + '%, mất ' + (d.ms / 1000).toFixed(1) + ' giây (' + d.model + ').');
+  }
+
+  // ---------- 5. Nhận dạng của trình duyệt ----------
+  async function testSr() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setStatus('sr', 'info', 'Trình duyệt này không có nhận dạng giọng nói tích hợp.'); return; }
+    setStatus('sr', 'run', 'Đang nghe… đọc to: “' + SAMPLE + '”');
+    const rec = new SR();
+    rec.lang = 'en-US';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    const out = await new Promise(resolve => {
+      let done = false;
+      const finish = v => { if (!done) { done = true; resolve(v); } };
+      rec.onresult = e => finish({ ok: true, text: e.results[0][0].transcript });
+      rec.onerror = e => finish({ ok: false, text: e.error || 'lỗi không rõ' });
+      rec.onend = () => finish({ ok: false, text: 'kết thúc mà không nhận được lời nói' });
+      setTimeout(() => { try { rec.stop(); } catch (e) {} }, 7000);
+      try { rec.start(); } catch (e) { finish({ ok: false, text: e.message }); }
+    });
+    setStatus('sr', out.ok ? 'pass' : 'info', out.ok
+      ? 'Nhận dạng được: “' + out.text + '” (khớp ' + overlap(out.text, SAMPLE) + '%)'
+      : 'Không dùng được: ' + out.text);
+  }
+
+  // ---------- Báo cáo ----------
+  function buildReport() {
+    const env = envInfo();
+    const lines = [
+      'English Reflex – kết quả kiểm tra thiết bị',
+      'Thời gian: ' + new Date().toLocaleString('vi-VN'),
+      'Trình duyệt: ' + env.ua,
+      'Khung nhúng: ' + (env.inFrame ? 'có' : 'không') + ', quyền micro của trang: ' + env.micPolicy + ', bảo mật: ' + (env.secure ? 'có' : 'không'),
+      'Máy chủ: ' + (serverInfo ? 'key ' + (serverInfo.hasKey ? 'có' : 'chưa') + ', model ' + serverInfo.textModel : 'không kết nối được')
+    ];
+    TESTS.forEach((t, i) => {
+      const r = results[t.key] || { status: 'idle', detail: '' };
+      lines.push((i + 1) + '. ' + t.title + ': ' + LABEL[r.status] + (r.detail ? ' – ' + r.detail.replace(/\n/g, ' ') : ''));
+    });
+    return lines.join('\n');
+  }
+
+  async function copyReport() {
+    const text = buildReport();
+    const ta = document.getElementById('report');
+    ta.value = text;
+    ta.hidden = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Đã sao chép kết quả.');
+    } catch (e) {
+      ta.focus();
+      ta.select();
+      toast('Kết quả đã được chọn sẵn, anh bấm Sao chép.');
+    }
+  }
+
+  function toast(msg) { document.getElementById('toast').textContent = msg; }
+
+  // ---------- Xử lý âm thanh ----------
+  function mergeChunks(chunks) {
+    const total = chunks.reduce((n, c) => n + c.length, 0);
+    const out = new Float32Array(total);
+    let offset = 0;
+    chunks.forEach(c => { out.set(c, offset); offset += c.length; });
+    return out;
+  }
+
+  // Giảm tần số mẫu bằng trung bình cộng từng khối.
+  function downsample(input, inRate, outRate) {
+    if (outRate >= inRate) return input;
+    const ratio = inRate / outRate;
+    const outLen = Math.floor(input.length / ratio);
+    const out = new Float32Array(outLen);
+    for (let i = 0; i < outLen; i++) {
+      const start = Math.floor(i * ratio);
+      const end = Math.min(input.length, Math.floor((i + 1) * ratio));
+      let sum = 0;
+      for (let j = start; j < end; j++) sum += input[j];
+      out[i] = sum / Math.max(1, end - start);
+    }
+    return out;
+  }
+
+  // Đóng gói PCM 16-bit mono thành WAV.
+  function encodeWav(samples, rate) {
+    const buffer = new ArrayBuffer(44 + samples.length * 2);
+    const v = new DataView(buffer);
+    const writeStr = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    writeStr(0, 'RIFF'); v.setUint32(4, 36 + samples.length * 2, true); writeStr(8, 'WAVE');
+    writeStr(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    writeStr(36, 'data'); v.setUint32(40, samples.length * 2, true);
+    for (let i = 0; i < samples.length; i++) {
+      const s = Math.max(-1, Math.min(1, samples[i]));
+      v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+    return new Blob([v], { type: 'audio/wav' });
+  }
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result).split(',')[1]);
+      r.onerror = () => reject(new Error('Không đọc được bản ghi.'));
+      r.readAsDataURL(blob);
+    });
+  }
+
+  // ---------- Tiện ích ----------
+  function overlap(a, b) {
+    const words = s => String(s).toLowerCase().replace(/[^a-z' ]/g, ' ').split(/\s+/).filter(Boolean);
+    const target = words(b);
+    const got = new Set(words(a));
+    if (!target.length) return 0;
+    return Math.round(100 * target.filter(w => got.has(w)).length / target.length);
+  }
+  function kb(bytes) { return Math.round(bytes / 1024) + ' KB'; }
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  render();
+
+</script>
+  </body>
+</html>
